@@ -55,14 +55,22 @@ def generate_pri_mRNA(input_gtf, region_id, region_identifier):
             attr_id = m.group(1)
                 
         # only make primary_transcript record if multi-exonic
-
+        
         if attr_id not in multi_exon_dict:
             continue
         
+        
         # output a new transcript record
-        new_attr_id = attr_id + "_primary"
+        new_attr_id = "pre_" + attr_id
+        
+        if region_id == "gene":
+            new_attributes = attributes.replace(";", 
+                    '; transcript_id \"' + new_attr_id + '";', 
+                    1) 
+        else:
+            new_attributes = attributes.replace(attr_id, new_attr_id) 
 
-        new_attributes = attributes.replace(attr_id, new_attr_id) 
+        line[2] = 'transcript'
         line[8] = new_attributes
         print("{}".format("\t".join(line)))
         
@@ -114,7 +122,8 @@ def main():
 
     parser = argparse.ArgumentParser(description = """
            Add primary transcript (pre-mRNA) records 
-           into GTF annotations. Used for estimating
+           into GTF annotations. Note that "pre_" will be added
+           to the identifier. Used for estimating
            mature vs. pre-mRNA levels using RSEM/Salmon """)
 
     parser.add_argument('-i','--input_gtf', 
@@ -122,12 +131,15 @@ def main():
     
     parser.add_argument('-r','--region', 
             help = """region to use for defining 
-            region coordinates (default = 'transcript' """, default = "transcript",
+            region coordinates, (gene or transcript) (default =
+            'gene') """, 
+            default = "gene",
             required = False)
     
     parser.add_argument('-a','--identifier', 
             help = """attribute to extract to use for defining 
-            region name (default = 'transcript_id') """, default = "transcript_id",
+            region name (default = 'gene_id') """, 
+            default = "gene_id",
             required = False)
     
     args = parser.parse_args()
